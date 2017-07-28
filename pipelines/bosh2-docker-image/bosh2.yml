@@ -1,0 +1,43 @@
+---
+resources:
+- name: repository-inception-concourse
+  type: git
+  source:
+    uri: https://github.com/jriguera/test-ci.git
+    branch: master
+    paths:
+    - docker
+
+- name: task-docker-image
+  type: docker-image
+  source:
+    email: {{docker-hub-email}}
+    username: {{docker-hub-username}}
+    password: {{docker-hub-password}}
+    repository: platformengineering/bosh-cli
+
+jobs:
+- name: job-build-task-docker-image
+  public: true
+  serial: true
+  plan:
+  - get: src
+    resource: repository-inception-concourse
+    trigger: false
+  - put: task-docker-image
+    params:
+      build: platformengineering/bosh-cli
+
+- name: job-test-task-docker-image
+  public: true
+  serial: true
+  plan:
+  - aggregate:
+    - get: task-docker-image
+      passed: [job-build-task-docker-image]
+      trigger: true
+    - get: src
+      resource: repository-inception-concourse
+      trigger: false
+  - task: test-run-bosh-version
+    file: src/pipelines/bosh-docker-image/tasks/test-version.yml
