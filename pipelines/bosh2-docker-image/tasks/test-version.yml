@@ -8,4 +8,4 @@ image_resource:
     tag: "latest"
 
 run:
-  path: bosh --version
+  path: /usr/local/bin/bosh2 --version
